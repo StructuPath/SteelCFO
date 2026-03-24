@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server"
 import Anthropic from "@anthropic-ai/sdk"
+import { z } from "zod"
 import { getAllData } from "@/lib/data"
 import { calculateJobCostSummary } from "@/lib/engines/job-costing"
 import {
@@ -13,6 +14,32 @@ import {
 
 export const runtime = "nodejs"
 export const maxDuration = 60
+
+// --- Input validation ---
+const MessageSchema = z.object({
+  role: z.enum(["user", "assistant"]),
+  content: z.string().min(1).max(10000),
+})
+
+const ChatRequestSchema = z.object({
+  messages: z.array(MessageSchema).min(1).max(50),
+})
+
+// --- Simple in-memory rate limiter ---
+const rateLimitMap = new Map<string, { count: number; resetAt: number }>()
+const RATE_LIMIT_WINDOW_MS = 60_000
+const RATE_LIMIT_MAX_REQUESTS = 20
+
+function isRateLimited(ip: string): boolean {
+  const now = Date.now()
+  const entry = rateLimitMap.get(ip)
+  if (!entry || now > entry.resetAt) {
+    rateLimitMap.set(ip, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS })
+    return false
+  }
+  entry.count++
+  return entry.count > RATE_LIMIT_MAX_REQUESTS
+}
 
 function buildSystemPrompt(
   jobSummaries: ReturnType<typeof calculateJobCostSummary>,
@@ -82,15 +109,30 @@ Respond as a seasoned CFO. Be direct, data-driven, and actionable. Use specific 
 
 export async function POST(req: NextRequest) {
   try {
-    const { messages } = await req.json()
+    // Rate limiting
+    const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown"
+    if (isRateLimited(ip)) {
+      return Response.json(
+        { error: "Too many requests. Please try again later." },
+        { status: 429 }
+      )
+    }
+
+    // Input validation
+    const body = await req.json()
+    const parsed = ChatRequestSchema.safeParse(body)
+    if (!parsed.success) {
+      return Response.json(
+        { error: "Invalid request format." },
+        { status: 400 }
+      )
+    }
+    const { messages } = parsed.data
 
     const apiKey = process.env.ANTHROPIC_API_KEY
     if (!apiKey) {
       return Response.json(
-        {
-          error:
-            "ANTHROPIC_API_KEY not configured. Add it to your .env file.",
-        },
+        { error: "AI chat is not configured. Please contact the administrator." },
         { status: 500 }
       )
     }
@@ -185,12 +227,8 @@ export async function POST(req: NextRequest) {
     })
   } catch (error) {
     console.error("Chat API error:", error)
-    const message =
-      error instanceof Error
-        ? error.message
-        : "Failed to process chat request"
     return Response.json(
-      { error: message },
+      { error: "An internal error occurred. Please try again." },
       { status: 500 }
     )
   }
