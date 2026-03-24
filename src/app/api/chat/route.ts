@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server"
 import Anthropic from "@anthropic-ai/sdk"
 import { z } from "zod"
+import { auth } from "@/auth"
 import { getAllData } from "@/lib/data"
 import { calculateJobCostSummary } from "@/lib/engines/job-costing"
 import {
@@ -118,6 +119,15 @@ export async function POST(req: NextRequest) {
       )
     }
 
+    // Authentication check
+    const session = await auth()
+    if (!session && process.env.DEMO_MODE !== "true") {
+      return Response.json(
+        { error: "Authentication required." },
+        { status: 401 }
+      )
+    }
+
     // Input validation
     const body = await req.json()
     const parsed = ChatRequestSchema.safeParse(body)
@@ -129,6 +139,10 @@ export async function POST(req: NextRequest) {
     }
     const { messages } = parsed.data
 
+    // Resolve organization from session
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const orgId = (session?.user as any)?.organizationId
+
     const apiKey = process.env.ANTHROPIC_API_KEY
     if (!apiKey) {
       return Response.json(
@@ -138,7 +152,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Fetch all financial data and compute summaries
-    const data = await getAllData()
+    const data = await getAllData(orgId)
 
     const jobSummaries = calculateJobCostSummary(
       data.jobs,
@@ -192,12 +206,18 @@ export async function POST(req: NextRequest) {
       stream: true,
     })
 
-    // Stream the response as SSE
+    // Stream the response as SSE with abort signal support
+    const abortSignal = req.signal
     const encoder = new TextEncoder()
     const stream = new ReadableStream({
       async start(controller) {
         try {
           for await (const event of response) {
+            // Stop streaming if client disconnected
+            if (abortSignal.aborted) {
+              controller.close()
+              return
+            }
             if (
               event.type === "content_block_delta" &&
               event.delta.type === "text_delta"
@@ -213,7 +233,11 @@ export async function POST(req: NextRequest) {
           )
           controller.close()
         } catch (err) {
-          controller.error(err)
+          if (abortSignal.aborted) {
+            controller.close()
+          } else {
+            controller.error(err)
+          }
         }
       },
     })
