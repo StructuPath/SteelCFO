@@ -16,11 +16,11 @@ Built for steel fabricators and erectors who need real-time financial intelligen
 
 ## Tech Stack
 
-- **Framework:** Next.js 15 (App Router, React Server Components)
+- **Framework:** Next.js 16 (App Router, React Server Components)
 - **Language:** TypeScript (strict mode)
 - **Database:** PostgreSQL + Prisma ORM
 - **AI:** Anthropic Claude SDK (streaming SSE)
-- **Auth:** NextAuth v5 (beta) + Prisma adapter
+- **Auth:** NextAuth v5 (beta) + Prisma adapter + JWT strategy
 - **Charts:** Recharts
 - **Styling:** Tailwind CSS with custom cyber/HUD dark theme
 
@@ -73,7 +73,7 @@ npm run db:seed
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000).
+Open [http://localhost:3000](http://localhost:3000). With `DEMO_MODE=true` (default in `.env.example`), you'll go straight to the dashboard. Set `DEMO_MODE=false` to enable the login screen.
 
 ### Environment Variables
 
@@ -83,6 +83,8 @@ Open [http://localhost:3000](http://localhost:3000).
 | `NEXTAUTH_SECRET` | Auth signing key (generate with `openssl rand -base64 32`) |
 | `NEXTAUTH_URL` | Auth redirect URL (`http://localhost:3000` for dev) |
 | `ANTHROPIC_API_KEY` | Claude API key |
+| `DEMO_MODE` | Set to `"true"` to bypass authentication (for evaluation) |
+| `SEED_ADMIN_PASSWORD` | Password for the seeded admin user |
 
 ### Scripts
 

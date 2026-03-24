@@ -24,32 +24,46 @@ const suggestions = [
   "What change orders are pending approval?",
 ]
 
+// Allowlist of safe HTML tags produced by our markdown transform.
+// Strips anything not in this set to prevent XSS.
+const ALLOWED_TAGS = new Set([
+  "h1", "h2", "h3", "strong", "em", "ul", "li", "p", "br",
+])
+
+function stripUnsafeTags(html: string): string {
+  // Remove any tag not in the allowlist
+  return html.replace(/<\/?([a-zA-Z][a-zA-Z0-9]*)\b[^>]*>/g, (match, tag) => {
+    return ALLOWED_TAGS.has(tag.toLowerCase()) ? match : ""
+  })
+}
+
 function formatMarkdown(text: string): string {
   if (!text) return ""
-  return (
-    text
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/^### (.+)$/gm, "<h3>$1</h3>")
-      .replace(/^## (.+)$/gm, "<h2>$1</h2>")
-      .replace(/^# (.+)$/gm, "<h1>$1</h1>")
-      .replace(
-        /\*\*(.+?)\*\*/g,
-        "<strong>$1</strong>"
-      )
-      .replace(/\*(.+?)\*/g, "<em>$1</em>")
-      .replace(/^- (.+)$/gm, "<li>$1</li>")
-      .replace(
-        /(<li>[\s\S]*?<\/li>)/g,
-        "<ul>$1</ul>"
-      )
-      .replace(/<\/ul>\s*<ul>/g, "")
-      .replace(/\n\n/g, "</p><p>")
-      .replace(/\n/g, "<br/>")
-      .replace(/^/, "<p>")
-      .replace(/$/, "</p>")
-  )
+  // Escape all HTML entities first
+  let safe = text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#x27;")
+
+  // Apply markdown transforms on escaped content
+  safe = safe
+    .replace(/^### (.+)$/gm, "<h3>$1</h3>")
+    .replace(/^## (.+)$/gm, "<h2>$1</h2>")
+    .replace(/^# (.+)$/gm, "<h1>$1</h1>")
+    .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+    .replace(/\*(.+?)\*/g, "<em>$1</em>")
+    .replace(/^- (.+)$/gm, "<li>$1</li>")
+    .replace(/(<li>[\s\S]*?<\/li>)/g, "<ul>$1</ul>")
+    .replace(/<\/ul>\s*<ul>/g, "")
+    .replace(/\n\n/g, "</p><p>")
+    .replace(/\n/g, "<br/>")
+    .replace(/^/, "<p>")
+    .replace(/$/, "</p>")
+
+  // Final safety pass — strip anything that shouldn't be there
+  return stripUnsafeTags(safe)
 }
 
 export default function ChatPage() {

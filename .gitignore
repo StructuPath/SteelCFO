@@ -39,3 +39,8 @@ prisma/migrations/
 
 # vercel
 .vercel
+
+# local tooling
+.pi/
+extensions/
+docs/research/

@@ -9,6 +9,7 @@
  */
 
 import { prisma } from "./db"
+import { auth } from "@/auth"
 import type {
   Job,
   CostRecord,
@@ -19,8 +20,21 @@ import type {
   BankAccount,
 } from "./engines/types"
 
-// Default organization ID (matches prisma/seed.ts)
-const DEFAULT_ORG_ID = "demo-steel-co"
+// Demo organization ID (matches prisma/seed.ts)
+const DEMO_ORG_ID = "demo-steel-co"
+
+/**
+ * Resolve the organization ID from the current session.
+ * Falls back to DEMO_ORG_ID when DEMO_MODE is enabled or no session exists.
+ */
+export async function getOrgId(): Promise<string> {
+  const session = await auth()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const orgId = (session?.user as any)?.organizationId
+  if (orgId) return orgId
+  if (process.env.DEMO_MODE === "true") return DEMO_ORG_ID
+  return DEMO_ORG_ID // Fallback for backwards compatibility
+}
 
 /**
  * Safely convert Prisma Decimal, number, or string to a plain number.
@@ -49,7 +63,7 @@ function toDateStr(d: Date): string {
 // ---------------------------------------------------------------------------
 
 export async function getJobs(
-  orgId = DEFAULT_ORG_ID
+  orgId = DEMO_ORG_ID
 ): Promise<Job[]> {
   const jobs = await prisma.job.findMany({
     where: { organizationId: orgId },
@@ -72,7 +86,7 @@ export async function getJobs(
 }
 
 export async function getCosts(
-  orgId = DEFAULT_ORG_ID
+  orgId = DEMO_ORG_ID
 ): Promise<CostRecord[]> {
   const costs = await prisma.costRecord.findMany({
     where: { organizationId: orgId },
@@ -91,7 +105,7 @@ export async function getCosts(
 }
 
 export async function getInvoices(
-  orgId = DEFAULT_ORG_ID
+  orgId = DEMO_ORG_ID
 ): Promise<Invoice[]> {
   const invoices = await prisma.invoice.findMany({
     where: { organizationId: orgId },
@@ -112,7 +126,7 @@ export async function getInvoices(
 }
 
 export async function getBills(
-  orgId = DEFAULT_ORG_ID
+  orgId = DEMO_ORG_ID
 ): Promise<Bill[]> {
   const bills = await prisma.bill.findMany({
     where: { organizationId: orgId },
@@ -131,7 +145,7 @@ export async function getBills(
 }
 
 export async function getChangeOrders(
-  orgId = DEFAULT_ORG_ID
+  orgId = DEMO_ORG_ID
 ): Promise<ChangeOrder[]> {
   const cos = await prisma.changeOrder.findMany({
     where: { organizationId: orgId },
@@ -152,7 +166,7 @@ export async function getChangeOrders(
 }
 
 export async function getPayroll(
-  orgId = DEFAULT_ORG_ID
+  orgId = DEMO_ORG_ID
 ): Promise<PayrollRecord[]> {
   const records = await prisma.payrollRecord.findMany({
     where: { organizationId: orgId },
@@ -173,7 +187,7 @@ export async function getPayroll(
 }
 
 export async function getBankAccounts(
-  orgId = DEFAULT_ORG_ID
+  orgId = DEMO_ORG_ID
 ): Promise<BankAccount[]> {
   const accounts = await prisma.bankAccount.findMany({
     where: { organizationId: orgId },
@@ -201,7 +215,9 @@ export async function getBankAccounts(
 // Batch Fetcher (all data at once for dashboard)
 // ---------------------------------------------------------------------------
 
-export async function getAllData(orgId = DEFAULT_ORG_ID) {
+export async function getAllData(orgId?: string) {
+  if (!orgId) orgId = await getOrgId()
+
   const [
     jobs,
     costs,

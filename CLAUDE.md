@@ -12,7 +12,7 @@ SteelCFO is an AI-powered financial command center for structural steel contract
 # Development
 npm run dev              # Start dev server on localhost:3000
 npm run build            # Production build
-npm run lint             # ESLint (next/core-web-vitals + next/typescript)
+npm run lint             # ESLint (eslint src/)
 
 # Database (PostgreSQL + Prisma)
 npm run db:generate      # Regenerate Prisma client after schema changes
@@ -47,11 +47,17 @@ RSC Page → getAllData() (lib/data.ts) → Pure Engine Functions (lib/engines/)
 
 ### AI Chat (`src/app/api/chat/route.ts`)
 
-POST endpoint that fetches all financial data, runs every engine, embeds results into a system prompt, then streams Claude's response via SSE. Client uses EventSource for real-time display.
+POST endpoint with Zod input validation, rate limiting (20 req/min per IP), and session-based auth. Fetches all financial data, runs every engine, embeds results into a system prompt, then streams Claude's response via SSE with abort signal support for client disconnects.
+
+### Authentication (`src/auth.ts`, `src/middleware.ts`)
+
+NextAuth v5 with credentials provider, JWT strategy, Prisma adapter. Middleware protects all dashboard and API routes. Session includes `userId`, `organizationId`, and `role`.
+
+**Demo mode:** Set `DEMO_MODE=true` to bypass authentication entirely — all routes are accessible without login. Useful for evaluation and development.
 
 ### Multi-Org Isolation
 
-All queries filter by `organizationId`. Currently hardcoded to `"demo-steel-co"` for demo mode.
+All queries filter by `organizationId`, resolved from the authenticated user's session via `getOrgId()` in `lib/data.ts`. Falls back to `"demo-steel-co"` in demo mode.
 
 ## Key Conventions
 
@@ -64,9 +70,9 @@ All queries filter by `organizationId`. Currently hardcoded to `"demo-steel-co"`
 
 ## Tech Stack
 
-- **Framework:** Next.js 15 (App Router, RSC), React 19, TypeScript (strict)
-- **Database:** PostgreSQL + Prisma 6.2
-- **Auth:** NextAuth v5 beta + Prisma adapter + bcryptjs
+- **Framework:** Next.js 16 (App Router, RSC), React 19.2, TypeScript (strict)
+- **Database:** PostgreSQL + Prisma 6
+- **Auth:** NextAuth v5 beta + Prisma adapter + bcryptjs (JWT strategy)
 - **AI:** Anthropic Claude SDK (`@anthropic-ai/sdk`)
 - **Charts:** Recharts
 - **Styling:** Tailwind CSS 3.4 with extensive custom theme
@@ -79,4 +85,6 @@ DATABASE_URL           # PostgreSQL connection string
 NEXTAUTH_SECRET        # Auth signing key
 NEXTAUTH_URL           # Auth redirect URL (http://localhost:3000)
 ANTHROPIC_API_KEY      # Claude API key
+DEMO_MODE              # Set to "true" to bypass authentication
+SEED_ADMIN_PASSWORD    # Password for seeded admin user (demo only)
 ```

@@ -241,13 +241,15 @@ async function seedUser(orgId: string): Promise<string> {
     update: {
       name: "Steel CFO Admin",
       role: "ADMIN",
-      passwordHash: hashSync("steelcfo2024", 10),
+      // DEMO ONLY — never use hardcoded passwords in production
+      passwordHash: hashSync(process.env.SEED_ADMIN_PASSWORD || "change-me-in-production", 12),
     },
     create: {
       email: "admin@steelcfo.com",
       name: "Steel CFO Admin",
       role: "ADMIN",
-      passwordHash: hashSync("steelcfo2024", 10),
+      // DEMO ONLY — never use hardcoded passwords in production
+      passwordHash: hashSync(process.env.SEED_ADMIN_PASSWORD || "change-me-in-production", 12),
       organizationId: orgId,
     },
   })
