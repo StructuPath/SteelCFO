@@ -1,0 +1,21 @@
+bill_id,vendor,job_id,bill_date,due_date,amount,paid,status,category
+AP-3001,Nucor Steel,J-2501,2026-02-15,2026-03-17,285000,0,open,material
+AP-3002,Nucor Steel,J-2503,2026-02-20,2026-03-22,310000,0,open,material
+AP-3003,Steel Technologies Inc,J-2502,2026-02-10,2026-03-12,148000,0,open,material
+AP-3004,Lincoln Electric Supply,J-2501,2026-02-18,2026-03-05,18500,0,open,material
+AP-3005,Atlas Crane & Rigging,J-2501,2026-02-28,2026-03-15,42000,0,open,equipment
+AP-3006,Atlas Crane & Rigging,J-2503,2026-02-28,2026-03-15,38000,0,open,equipment
+AP-3007,Precision Detailing LLC,J-2505,2026-02-01,2026-03-03,42000,42000,paid,sub
+AP-3008,Industrial Coatings Corp,J-2501,2026-02-25,2026-03-27,38000,0,open,material
+AP-3009,Industrial Coatings Corp,J-2507,2026-02-22,2026-03-24,12000,0,open,material
+AP-3010,Reliable Transport LLC,J-2501,2026-02-28,2026-03-14,22000,0,open,equipment
+AP-3011,Reliable Transport LLC,J-2502,2026-02-28,2026-03-14,15500,0,open,equipment
+AP-3012,Valley Concrete Subs,J-2503,2026-02-15,2026-03-17,45000,0,open,sub
+AP-3013,Apex Insurance Group,,2026-03-01,2026-03-15,32000,0,open,overhead
+AP-3014,Metro Office Lease,,2026-03-01,2026-03-01,8500,0,open,overhead
+AP-3015,Shop Utilities,,2026-02-28,2026-03-15,4200,0,open,overhead
+AP-3016,Steel Technologies Inc,J-2505,2026-02-25,2026-03-27,185000,0,open,material
+AP-3017,Nucor Steel,J-2507,2026-02-28,2026-03-30,215000,0,open,material
+AP-3018,Precision Detailing LLC,J-2507,2026-02-15,2026-03-17,24000,0,open,sub
+AP-3019,Fleet Fuel Services,,2026-02-28,2026-03-10,6800,0,open,overhead
+AP-3020,Hilti Fasteners Direct,J-2504,2026-02-20,2026-03-07,8200,0,open,material

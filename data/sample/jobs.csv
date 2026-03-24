@@ -1,0 +1,9 @@
+job_id,job_name,customer,contract_value,estimated_cost,start_date,end_date,status,type,tons
+J-2501,Memorial Regional Hospital Expansion,Meridian Health Systems,4850000,4122500,2025-09-15,2026-06-30,active,structural,1250
+J-2502,Crossroads Distribution Warehouse,Apex Logistics Group,2150000,1849000,2025-10-01,2026-04-15,active,structural,680
+J-2503,Metro Parking Garage Phase 2,City of Riverside Development,3200000,2752000,2025-11-01,2026-08-31,active,structural,920
+J-2504,Pinnacle Office Tower - Mezzanine,Pinnacle Commercial Partners,875000,752500,2025-12-01,2026-03-31,active,misc,145
+J-2505,Lakeview Elementary School,Tri-County School District,1650000,1402500,2026-01-06,2026-07-31,active,structural,440
+J-2506,Ironworks Brewery Renovation,Ironworks Holdings LLC,520000,436800,2025-08-01,2025-12-15,complete,ornamental,65
+J-2507,Harbor Point Condos - Balconies,Harbor Point Development,980000,833000,2026-02-10,2026-06-30,active,misc,175
+J-2508,State Route 9 Bridge Reinforcement,DOT Region 4,2400000,2088000,2026-03-01,2026-10-31,pending,structural,580

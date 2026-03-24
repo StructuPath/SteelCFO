@@ -1,0 +1,281 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------------------
+// Enums
+// ---------------------------------------------------------------------------
+
+enum UserRole {
+  ADMIN
+  CFO
+  PM
+  VIEWER
+}
+
+enum JobStatus {
+  active
+  complete
+  pending
+  bidding
+}
+
+enum JobType {
+  structural
+  misc
+  ornamental
+}
+
+enum CostType {
+  material
+  labor
+  equipment
+  sub
+  engineering
+  coatings
+}
+
+enum InvoiceStatus {
+  open
+  paid
+  partial
+}
+
+enum BillStatus {
+  open
+  paid
+  scheduled
+}
+
+enum ChangeOrderStatus {
+  approved
+  pending
+  rejected
+}
+
+// ---------------------------------------------------------------------------
+// Models
+// ---------------------------------------------------------------------------
+
+model Organization {
+  id        String   @id @default(cuid())
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users          User[]
+  jobs           Job[]
+  costRecords    CostRecord[]
+  invoices       Invoice[]
+  bills          Bill[]
+  changeOrders   ChangeOrder[]
+  payrollRecords PayrollRecord[]
+  bankAccounts   BankAccount[]
+  chatMessages   ChatMessage[]
+
+  @@map("organizations")
+}
+
+model User {
+  id             String   @id @default(cuid())
+  email          String   @unique
+  name           String?
+  passwordHash   String?
+  role           UserRole @default(VIEWER)
+  organizationId String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  chatMessages ChatMessage[]
+
+  @@index([organizationId])
+  @@map("users")
+}
+
+model Job {
+  id              String    @id
+  name            String
+  customer        String
+  contractValue   Decimal   @db.Decimal(15, 2)
+  estimatedCost   Decimal   @db.Decimal(15, 2)
+  status          JobStatus @default(active)
+  type            JobType
+  tons            Float
+  startDate       DateTime  @db.Date
+  endDate         DateTime? @db.Date
+  percentComplete Float     @default(0)
+  organizationId  String
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  organization   Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  costRecords    CostRecord[]
+  invoices       Invoice[]
+  bills          Bill[]
+  changeOrders   ChangeOrder[]
+  payrollRecords PayrollRecord[]
+
+  @@index([organizationId])
+  @@index([status])
+  @@index([organizationId, status])
+  @@map("jobs")
+}
+
+model CostRecord {
+  id              String   @id @default(cuid())
+  jobId           String
+  costCode        String
+  description     String
+  budgetAmount    Decimal  @db.Decimal(15, 2)
+  actualAmount    Decimal  @db.Decimal(15, 2) @default(0)
+  committedAmount Decimal  @db.Decimal(15, 2) @default(0)
+  costType        CostType
+  period          String?
+  organizationId  String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  job          Job          @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([jobId])
+  @@index([organizationId])
+  @@index([jobId, costCode])
+  @@map("cost_records")
+}
+
+model Invoice {
+  id             String        @id
+  jobId          String
+  customer       String
+  invoiceNumber  String
+  amount         Decimal       @db.Decimal(15, 2)
+  amountPaid     Decimal       @db.Decimal(15, 2) @default(0)
+  invoiceDate    DateTime      @db.Date
+  dueDate        DateTime      @db.Date
+  paidDate       DateTime?     @db.Date
+  status         InvoiceStatus @default(open)
+  retainage      Decimal       @db.Decimal(15, 2) @default(0)
+  organizationId String
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  job          Job          @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([jobId])
+  @@index([organizationId])
+  @@index([status])
+  @@map("invoices")
+}
+
+model Bill {
+  id              String     @id
+  jobId           String
+  vendor          String
+  billNumber      String
+  amount          Decimal    @db.Decimal(15, 2)
+  dueDate         DateTime   @db.Date
+  paidDate        DateTime?  @db.Date
+  status          BillStatus @default(open)
+  category        String
+  discountPercent Float      @default(0)
+  discountDate    DateTime?  @db.Date
+  organizationId  String
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+
+  job          Job          @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([jobId])
+  @@index([organizationId])
+  @@index([status])
+  @@map("bills")
+}
+
+model ChangeOrder {
+  id             String            @id
+  jobId          String
+  description    String
+  amount         Decimal           @db.Decimal(15, 2)
+  status         ChangeOrderStatus @default(pending)
+  submittedDate  DateTime          @db.Date
+  approvedDate   DateTime?         @db.Date
+  probability    Float             @default(0.5)
+  organizationId String
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+
+  job          Job          @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([jobId])
+  @@index([organizationId])
+  @@index([status])
+  @@map("change_orders")
+}
+
+model PayrollRecord {
+  id             String   @id @default(cuid())
+  jobId          String
+  weekEnding     DateTime @db.Date
+  employees      Int
+  straightHours  Float
+  overtimeHours  Float
+  totalHours     Float
+  grossPay       Decimal  @db.Decimal(15, 2)
+  tonsInstalled  Float    @default(0)
+  hoursPerTon    Float    @default(0)
+  organizationId String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  job          Job          @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([jobId])
+  @@index([organizationId])
+  @@index([weekEnding])
+  @@map("payroll_records")
+}
+
+model BankAccount {
+  id              String   @id @default(cuid())
+  name            String
+  accountType     String
+  balance         Decimal  @db.Decimal(15, 2)
+  availableCredit Decimal  @db.Decimal(15, 2) @default(0)
+  asOfDate        DateTime @db.Date
+  organizationId  String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@map("bank_accounts")
+}
+
+model ChatMessage {
+  id             String   @id @default(cuid())
+  userId         String
+  role           String
+  content        String   @db.Text
+  organizationId String
+  createdAt      DateTime @default(now())
+
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([organizationId])
+  @@index([createdAt])
+  @@map("chat_messages")
+}

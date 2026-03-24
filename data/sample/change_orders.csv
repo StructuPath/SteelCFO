@@ -1,0 +1,11 @@
+co_id,job_id,description,amount,status,submitted_date,approved_date,probability
+CO-101,J-2501,Additional moment connections at Level 3,185000,approved,2025-11-15,2025-12-10,100
+CO-102,J-2501,Helipad steel framing addition,320000,pending,2026-01-20,,75
+CO-103,J-2501,Revised MEP opening reinforcement,42000,approved,2026-01-05,2026-01-28,100
+CO-104,J-2502,Mezzanine addition - east bay,165000,pending,2026-02-01,,60
+CO-105,J-2502,Dock leveler embed plates,28000,approved,2025-12-18,2026-01-08,100
+CO-106,J-2503,Stair tower redesign - seismic upgrade,210000,pending,2026-01-25,,80
+CO-107,J-2503,Additional vehicle barrier cable rail,55000,pending,2026-02-15,,50
+CO-108,J-2504,Add canopy steel at main entry,68000,rejected,2026-01-10,2026-02-05,0
+CO-109,J-2505,Gymnasium roof truss modification,92000,pending,2026-02-20,,70
+CO-110,J-2507,Extended balcony at penthouse units,145000,pending,2026-02-25,,65

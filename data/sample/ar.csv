@@ -1,0 +1,16 @@
+invoice_id,job_id,customer,invoice_date,due_date,amount,paid_amount,status
+INV-4001,J-2501,Meridian Health Systems,2026-02-28,2026-03-30,485000,0,open
+INV-4002,J-2501,Meridian Health Systems,2026-01-31,2026-03-02,465000,465000,paid
+INV-4003,J-2501,Meridian Health Systems,2025-12-31,2026-01-30,420000,420000,paid
+INV-4004,J-2502,Apex Logistics Group,2026-02-28,2026-03-30,215000,0,open
+INV-4005,J-2502,Apex Logistics Group,2026-01-31,2026-03-02,198000,198000,paid
+INV-4006,J-2502,Apex Logistics Group,2025-12-15,2026-01-14,185000,92500,partial
+INV-4007,J-2503,City of Riverside Development,2026-02-28,2026-03-30,320000,0,open
+INV-4008,J-2503,City of Riverside Development,2026-01-31,2026-03-02,285000,0,open
+INV-4009,J-2504,Pinnacle Commercial Partners,2026-02-15,2026-03-17,145000,0,open
+INV-4010,J-2504,Pinnacle Commercial Partners,2026-01-15,2026-02-14,128000,128000,paid
+INV-4011,J-2505,Tri-County School District,2026-02-28,2026-04-29,165000,0,open
+INV-4012,J-2506,Ironworks Holdings LLC,2025-11-30,2025-12-30,85000,85000,paid
+INV-4013,J-2506,Ironworks Holdings LLC,2025-10-31,2025-11-30,92000,68000,partial
+INV-4014,J-2507,Harbor Point Development,2026-02-28,2026-03-30,98000,0,open
+INV-4015,J-2503,City of Riverside Development,2025-12-31,2026-01-30,245000,245000,paid
