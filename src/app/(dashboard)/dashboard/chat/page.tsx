@@ -81,6 +81,31 @@ export default function ChatPage() {
     })
   }, [messages])
 
+  // Load persisted history for signed-in users
+  useEffect(() => {
+    const controller = new AbortController()
+    fetch("/api/chat", { signal: controller.signal })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data?.messages?.length) {
+          setMessages(data.messages)
+        }
+      })
+      .catch(() => {
+        // History is best-effort; the chat works without it
+      })
+    return () => controller.abort()
+  }, [])
+
+  const clearHistory = useCallback(async () => {
+    setMessages([])
+    try {
+      await fetch("/api/chat", { method: "DELETE" })
+    } catch {
+      // Best-effort
+    }
+  }, [])
+
   const sendMessage = useCallback(
     async (content: string) => {
       if (!content.trim() || isLoading) return
@@ -214,6 +239,16 @@ export default function ChatPage() {
           <span className="font-mono text-[9px] uppercase tracking-[0.2em] text-neon-green/70">
             ONLINE
           </span>
+          {messages.length > 0 && (
+            <button
+              type="button"
+              onClick={clearHistory}
+              disabled={isLoading}
+              className="ml-auto rounded-sm border border-grid-line px-2 py-0.5 font-mono text-[9px] uppercase tracking-[0.2em] text-hud-dim transition-colors hover:border-neon-red/40 hover:text-neon-red disabled:opacity-40"
+            >
+              Clear Session
+            </button>
+          )}
         </div>
       </div>
 

@@ -2,6 +2,7 @@ import { NextRequest } from "next/server"
 import Anthropic from "@anthropic-ai/sdk"
 import { z } from "zod"
 import { auth } from "@/auth"
+import { prisma } from "@/lib/db"
 import { getAllData } from "@/lib/data"
 import { calculateJobCostSummary } from "@/lib/engines/job-costing"
 import {
@@ -113,6 +114,42 @@ CASH FORECAST (13-week):
 - Minimum Balance: $${cashForecast.summary.minBalance.toLocaleString()} (Week ${cashForecast.summary.minBalanceWeek})
 
 Respond as a seasoned CFO. Be direct, data-driven, and actionable. Use specific numbers from the data above. When discussing risks, recommend concrete steps. Format responses with headers and bullet points for clarity.`
+}
+
+const HISTORY_LIMIT = 100
+
+/**
+ * Returns the signed-in user's persisted chat history (oldest first).
+ * Demo mode has no user identity, so history is empty there.
+ */
+export async function GET() {
+  const session = await auth()
+  if (!session && process.env.DEMO_MODE !== "true") {
+    return Response.json({ error: "Authentication required." }, { status: 401 })
+  }
+  const userId = session?.user?.id
+  if (!userId) return Response.json({ messages: [] })
+
+  const rows = await prisma.chatMessage.findMany({
+    where: { userId },
+    orderBy: { createdAt: "desc" },
+    take: HISTORY_LIMIT,
+    select: { role: true, content: true },
+  })
+  return Response.json({ messages: rows.reverse() })
+}
+
+/** Clears the signed-in user's chat history. */
+export async function DELETE() {
+  const session = await auth()
+  if (!session && process.env.DEMO_MODE !== "true") {
+    return Response.json({ error: "Authentication required." }, { status: 401 })
+  }
+  const userId = session?.user?.id
+  if (userId) {
+    await prisma.chatMessage.deleteMany({ where: { userId } })
+  }
+  return Response.json({ ok: true })
 }
 
 export async function POST(req: NextRequest) {
@@ -230,19 +267,55 @@ export async function POST(req: NextRequest) {
     // Stream the response as SSE with abort signal support
     const abortSignal = req.signal
     const encoder = new TextEncoder()
+    const userId = session?.user?.id
+    const lastUserMessage = messages[messages.length - 1]
+
+    // Persist the exchange for signed-in users (demo mode is ephemeral).
+    // Fire-and-forget: a persistence failure must not break the stream.
+    const persistExchange = (assistantText: string) => {
+      if (!userId || !orgId) return
+      const rows = []
+      if (lastUserMessage?.role === "user") {
+        rows.push({
+          userId,
+          organizationId: orgId,
+          role: "user",
+          content: lastUserMessage.content,
+        })
+      }
+      if (assistantText) {
+        rows.push({
+          userId,
+          organizationId: orgId,
+          role: "assistant",
+          content: assistantText,
+        })
+      }
+      if (rows.length > 0) {
+        prisma.chatMessage
+          .createMany({ data: rows })
+          .catch((err) =>
+            console.error("Failed to persist chat exchange:", err)
+          )
+      }
+    }
+
     const stream = new ReadableStream({
       async start(controller) {
+        let assistantText = ""
         try {
           for await (const event of response) {
             // Stop streaming if client disconnected
             if (abortSignal.aborted) {
               controller.close()
+              persistExchange(assistantText)
               return
             }
             if (
               event.type === "content_block_delta" &&
               event.delta.type === "text_delta"
             ) {
+              assistantText += event.delta.text
               const chunk = `data: ${JSON.stringify({ text: event.delta.text })}\n\n`
               controller.enqueue(
                 encoder.encode(chunk)
@@ -253,9 +326,11 @@ export async function POST(req: NextRequest) {
             encoder.encode("data: [DONE]\n\n")
           )
           controller.close()
+          persistExchange(assistantText)
         } catch (err) {
           if (abortSignal.aborted) {
             controller.close()
+            persistExchange(assistantText)
           } else {
             controller.error(err)
           }
