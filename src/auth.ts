@@ -48,6 +48,9 @@ function recordFailedLogin(email: string) {
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(prisma),
   session: { strategy: "jwt" },
+  // Self-hosted deployments sit behind proxies/load balancers whose Host
+  // header NextAuth would otherwise reject with UntrustedHost
+  trustHost: true,
   pages: {
     signIn: "/login",
   },
