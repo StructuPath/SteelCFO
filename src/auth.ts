@@ -29,30 +29,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
         const { email, password } = parsed.data
 
-        // Demo mode: accept demo credentials without DB lookup
-        if (process.env.DEMO_MODE === "true") {
-          const user = await prisma.user.findUnique({
-            where: { email },
-            select: {
-              id: true,
-              email: true,
-              name: true,
-              role: true,
-              organizationId: true,
-              passwordHash: true,
-            },
-          })
-          if (user) {
-            return {
-              id: user.id,
-              email: user.email,
-              name: user.name,
-              role: user.role,
-              organizationId: user.organizationId,
-            }
-          }
-        }
-
         const user = await prisma.user.findUnique({
           where: { email },
           select: {
@@ -64,9 +40,14 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             passwordHash: true,
           },
         })
+        if (!user) return null
 
-        if (!user || !user.passwordHash) return null
-        if (!compareSync(password, user.passwordHash)) return null
+        // Demo mode bypasses password verification (middleware skips auth
+        // entirely in demo mode; this keeps the login form usable there)
+        if (process.env.DEMO_MODE !== "true") {
+          if (!user.passwordHash) return null
+          if (!compareSync(password, user.passwordHash)) return null
+        }
 
         return {
           id: user.id,
@@ -81,20 +62,17 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const u = user as any
-        token.role = u.role
-        token.organizationId = u.organizationId
+        token.role = user.role
+        token.organizationId = user.organizationId
       }
       return token
     },
     async session({ session, token }) {
       if (session.user) {
         session.user.id = token.sub as string
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const s = session.user as any
-        s.role = token.role
-        s.organizationId = token.organizationId
+        session.user.role = (token.role as string | undefined) ?? "member"
+        session.user.organizationId =
+          (token.organizationId as string | undefined) ?? ""
       }
       return session
     },

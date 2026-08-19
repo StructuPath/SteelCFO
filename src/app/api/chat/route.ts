@@ -30,9 +30,16 @@ const ChatRequestSchema = z.object({
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>()
 const RATE_LIMIT_WINDOW_MS = 60_000
 const RATE_LIMIT_MAX_REQUESTS = 20
+const RATE_LIMIT_SWEEP_THRESHOLD = 1_000
 
 function isRateLimited(ip: string): boolean {
   const now = Date.now()
+  // Prune expired entries so the map can't grow without bound
+  if (rateLimitMap.size > RATE_LIMIT_SWEEP_THRESHOLD) {
+    for (const [key, value] of rateLimitMap) {
+      if (now > value.resetAt) rateLimitMap.delete(key)
+    }
+  }
   const entry = rateLimitMap.get(ip)
   if (!entry || now > entry.resetAt) {
     rateLimitMap.set(ip, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS })
@@ -140,8 +147,7 @@ export async function POST(req: NextRequest) {
     const { messages } = parsed.data
 
     // Resolve organization from session
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const orgId = (session?.user as any)?.organizationId
+    const orgId = session?.user?.organizationId
 
     const apiKey = process.env.ANTHROPIC_API_KEY
     if (!apiKey) {
@@ -193,18 +199,33 @@ export async function POST(req: NextRequest) {
 
     const client = new Anthropic({ apiKey })
 
-    const response = await client.messages.create({
-      model: "claude-sonnet-4-20250514",
-      max_tokens: 2048,
-      system: systemPrompt,
-      messages: messages.map(
-        (m: { role: string; content: string }) => ({
-          role: m.role as "user" | "assistant",
-          content: m.content,
+    const model = process.env.ANTHROPIC_MODEL || "claude-opus-5"
+    const anthropicMessages = messages.map((m) => ({
+      role: m.role,
+      content: m.content,
+    }))
+
+    // Server-side refusal fallbacks are supported on the Opus 5 / Fable 5 tier
+    const supportsServerFallback =
+      model === "claude-opus-5" || model === "claude-fable-5"
+
+    const response = supportsServerFallback
+      ? await client.beta.messages.create({
+          model,
+          max_tokens: 4096,
+          system: systemPrompt,
+          messages: anthropicMessages,
+          stream: true,
+          betas: ["server-side-fallback-2026-07-01"],
+          fallbacks: "default",
         })
-      ),
-      stream: true,
-    })
+      : await client.messages.create({
+          model,
+          max_tokens: 4096,
+          system: systemPrompt,
+          messages: anthropicMessages,
+          stream: true,
+        })
 
     // Stream the response as SSE with abort signal support
     const abortSignal = req.signal

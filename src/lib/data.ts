@@ -25,15 +25,16 @@ const DEMO_ORG_ID = "demo-steel-co"
 
 /**
  * Resolve the organization ID from the current session.
- * Falls back to DEMO_ORG_ID when DEMO_MODE is enabled or no session exists.
+ * Falls back to DEMO_ORG_ID only when DEMO_MODE is enabled.
+ * Throws when unauthenticated outside demo mode — data must never be
+ * served across org boundaries.
  */
 export async function getOrgId(): Promise<string> {
   const session = await auth()
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const orgId = (session?.user as any)?.organizationId
+  const orgId = session?.user?.organizationId
   if (orgId) return orgId
   if (process.env.DEMO_MODE === "true") return DEMO_ORG_ID
-  return DEMO_ORG_ID // Fallback for backwards compatibility
+  throw new Error("Unauthorized: no organization in session")
 }
 
 /**
