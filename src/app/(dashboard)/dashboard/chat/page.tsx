@@ -82,6 +82,7 @@ export default function ChatPage() {
   const inputRef = useRef<HTMLTextAreaElement>(null)
 
   useEffect(() => {
+    if (messages.length === 0) return
     messagesEndRef.current?.scrollIntoView({
       behavior: "smooth",
     })
