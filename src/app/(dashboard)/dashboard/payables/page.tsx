@@ -163,9 +163,11 @@ export default async function PayablesPage() {
             </TableHeader>
             <TableBody>
               {data.bills.map((bill) => {
+                const todayStr = new Date()
+                  .toISOString()
+                  .split("T")[0]
                 const isOverdue =
-                  new Date(bill.dueDate) <
-                    new Date() &&
+                  bill.dueDate < todayStr &&
                   bill.status !== "paid"
                 return (
                   <TableRow key={bill.id}>

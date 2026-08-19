@@ -3,6 +3,7 @@ import { generateCfoBrief } from "@/lib/engines/risk"
 import { calculateCashForecast } from "@/lib/engines/forecasting"
 import { calculateRiskScores } from "@/lib/engines/risk"
 import { MetricCard } from "@/components/metric-card"
+import { LocalDate } from "@/components/local-date"
 import { CashForecastChart } from "@/components/charts/cash-forecast-chart"
 import { RiskTable } from "@/components/risk-table"
 import {
@@ -55,13 +56,7 @@ export default async function DashboardPage() {
         <div className="flex items-center gap-2">
           <span className="h-px w-4 bg-neon-cyan/30" />
           <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-hud-dim">
-            Weekly CFO Brief —{" "}
-            {new Date().toLocaleDateString("en-US", {
-              weekday: "long",
-              year: "numeric",
-              month: "long",
-              day: "numeric",
-            })}
+            Weekly CFO Brief — <LocalDate />
           </p>
         </div>
       </div>

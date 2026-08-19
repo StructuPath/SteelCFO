@@ -31,9 +31,15 @@ const Progress = React.forwardRef<
         "bg-neon-red shadow-[0_0_8px_rgba(255,0,64,0.4)]",
     }
 
+    const clamped = Math.min(100, Math.max(0, value))
+
     return (
       <div
         ref={ref}
+        role="progressbar"
+        aria-valuenow={Math.round(clamped)}
+        aria-valuemin={0}
+        aria-valuemax={100}
         className={cn(
           "relative h-1.5 w-full overflow-hidden rounded-full bg-cyber-surface",
           className
@@ -46,7 +52,7 @@ const Progress = React.forwardRef<
             colors[variant]
           )}
           style={{
-            width: `${Math.min(100, Math.max(0, value))}%`,
+            width: `${clamped}%`,
           }}
         />
       </div>

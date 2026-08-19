@@ -54,6 +54,7 @@ const Button = React.forwardRef<
       variant,
       size,
       loading,
+      disabled,
       children,
       ...props
     },
@@ -65,8 +66,8 @@ const Button = React.forwardRef<
         buttonVariants({ variant, size }),
         className
       )}
-      disabled={loading || props.disabled}
       {...props}
+      disabled={loading || disabled}
     >
       {loading && (
         <span className="relative flex h-3 w-3">

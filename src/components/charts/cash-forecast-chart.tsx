@@ -18,14 +18,7 @@ import {
   CardContent,
 } from "@/components/ui/card"
 import type { CashForecastWeek } from "@/lib/engines/types"
-
-function formatCurrency(value: number): string {
-  if (Math.abs(value) >= 1_000_000)
-    return `$${(value / 1_000_000).toFixed(1)}M`
-  if (Math.abs(value) >= 1_000)
-    return `$${(value / 1_000).toFixed(0)}K`
-  return `$${value.toFixed(0)}`
-}
+import { formatCompactCurrency } from "@/lib/utils"
 
 export function CashForecastChart({
   weeks,
@@ -101,7 +94,7 @@ export function CashForecastChart({
                   fontSize: 10,
                   fontFamily: "JetBrains Mono",
                 }}
-                tickFormatter={formatCurrency}
+                tickFormatter={formatCompactCurrency}
                 axisLine={{
                   stroke: "rgba(0,255,255,0.1)",
                 }}
@@ -122,10 +115,10 @@ export function CashForecastChart({
                   boxShadow:
                     "0 0 20px rgba(0,255,255,0.1)",
                 }}
-                formatter={(value: number) => [
-                  formatCurrency(value),
-                  "",
-                ]}
+                formatter={(
+                  value: number,
+                  name: string
+                ) => [formatCompactCurrency(value), name]}
                 labelStyle={{
                   color: "#4A9BA8",
                   fontFamily: "JetBrains Mono",
@@ -145,6 +138,8 @@ export function CashForecastChart({
                 dataKey="balance"
                 fill="url(#balanceGlow)"
                 stroke="none"
+                tooltipType="none"
+                legendType="none"
               />
               <Line
                 type="monotone"

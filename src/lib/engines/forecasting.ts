@@ -30,9 +30,12 @@ function toDateStr(d: Date): string {
   return d.toISOString().split("T")[0]
 }
 
+// All date arithmetic uses UTC methods: YYYY-MM-DD strings parse as UTC
+// midnight, and mixing local-time mutation with toISOString() output shifts
+// dates by a day near DST transitions.
 function addDays(dateStr: string, days: number): Date {
   const d = new Date(dateStr)
-  d.setDate(d.getDate() + days)
+  d.setUTCDate(d.getUTCDate() + days)
   return d
 }
 
@@ -74,12 +77,13 @@ export function calculateCashForecast(
     minBalanceWeek: number
   }
 } {
-  // Starting cash from checking/operating accounts
+  // Starting cash from liquid accounts (credit lines excluded)
   const cashAccounts = bankAccounts.filter(
     (a) =>
       a.accountType === "checking" ||
       a.accountType === "operating" ||
-      a.accountType === "payroll"
+      a.accountType === "payroll" ||
+      a.accountType === "savings"
   )
   let currentBalance = cashAccounts.reduce(
     (s, a) => s + a.balance,
@@ -87,12 +91,14 @@ export function calculateCashForecast(
   )
   const beginningCash = currentBalance
 
-  // Determine the Monday of the current week
-  const now = asOfDate ? new Date(asOfDate) : new Date()
+  // Determine the Monday of the current week (UTC calendar)
+  const now = asOfDate
+    ? new Date(asOfDate)
+    : new Date(toDateStr(new Date()))
   const weekStart = new Date(now)
-  const dayOfWeek = weekStart.getDay()
+  const dayOfWeek = weekStart.getUTCDay()
   const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek
-  weekStart.setDate(weekStart.getDate() + mondayOffset)
+  weekStart.setUTCDate(weekStart.getUTCDate() + mondayOffset)
 
   // Open items for projection
   const openInvoices = invoices.filter(
@@ -119,9 +125,9 @@ export function calculateCashForecast(
 
   for (let w = 0; w < weeks; w++) {
     const wStart = new Date(weekStart)
-    wStart.setDate(wStart.getDate() + w * 7)
+    wStart.setUTCDate(wStart.getUTCDate() + w * 7)
     const wEnd = new Date(wStart)
-    wEnd.setDate(wEnd.getDate() + 6)
+    wEnd.setUTCDate(wEnd.getUTCDate() + 6)
 
     const wStartStr = toDateStr(wStart)
     const wEndStr = toDateStr(wEnd)
@@ -180,7 +186,7 @@ export function calculateCashForecast(
     })
 
     currentBalance = endingBalance
-    if (endingBalance < minBalance) {
+    if (w === 0 || endingBalance < minBalance) {
       minBalance = endingBalance
       minBalanceWeek = w + 1
     }
@@ -367,25 +373,21 @@ export function calculateApSchedule(
     (s, b) => s + b.amount,
     0
   )
+  // Compare YYYY-MM-DD strings directly — parsing to Date mixes UTC
+  // midnight with the local clock and misclassifies days near midnight
   const overdue = openBills
-    .filter((b) => new Date(b.dueDate) < refDate)
+    .filter((b) => b.dueDate < refStr)
     .reduce((s, b) => s + b.amount, 0)
 
-  const next7Date = addDays(refStr, 7)
-  const next30Date = addDays(refStr, 30)
+  const next7Str = toDateStr(addDays(refStr, 7))
+  const next30Str = toDateStr(addDays(refStr, 30))
 
   const dueNext7 = openBills
-    .filter((b) => {
-      const d = new Date(b.dueDate)
-      return d >= refDate && d <= next7Date
-    })
+    .filter((b) => b.dueDate >= refStr && b.dueDate <= next7Str)
     .reduce((s, b) => s + b.amount, 0)
 
   const dueNext30 = openBills
-    .filter((b) => {
-      const d = new Date(b.dueDate)
-      return d >= refDate && d <= next30Date
-    })
+    .filter((b) => b.dueDate >= refStr && b.dueDate <= next30Str)
     .reduce((s, b) => s + b.amount, 0)
 
   // Group into 4 weekly buckets

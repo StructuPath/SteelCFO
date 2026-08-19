@@ -102,10 +102,14 @@ export default async function CashPage() {
           value={formatCurrency(netFlow)}
           subtitle={`${formatCurrency(totalInflows)} in / ${formatCurrency(totalOutflows)} out`}
           icon="⬡"
-          trend={{
-            value: `${((netFlow / Math.max(1, totalInflows)) * 100).toFixed(0)}%`,
-            positive: netFlow >= 0,
-          }}
+          trend={
+            totalInflows > 0
+              ? {
+                  value: `${((netFlow / totalInflows) * 100).toFixed(0)}%`,
+                  positive: netFlow >= 0,
+                }
+              : undefined
+          }
         />
       </div>
 
@@ -220,8 +224,8 @@ export default async function CashPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {data.bankAccounts.map((a, i) => (
-                <TableRow key={i}>
+              {data.bankAccounts.map((a) => (
+                <TableRow key={a.name}>
                   <TableCell className="font-mono text-xs font-medium text-neon-cyan">
                     {a.name}
                   </TableCell>

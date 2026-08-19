@@ -47,7 +47,14 @@ export function MetricCard({
                       : "text-neon-red text-glow-red"
                   )}
                 >
-                  {trend.positive ? "▲" : "▼"}{" "}
+                  <span aria-hidden="true">
+                    {trend.positive ? "▲" : "▼"}
+                  </span>
+                  <span className="sr-only">
+                    {trend.positive
+                      ? "favorable:"
+                      : "unfavorable:"}
+                  </span>{" "}
                   {trend.value}
                 </span>
               </div>

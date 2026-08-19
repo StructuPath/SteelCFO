@@ -84,8 +84,8 @@ export default async function JobsPage() {
         {(
           [
             {
-              label: "Total Projects",
-              value: `${data.jobs.length}`,
+              label: "Tracked Jobs",
+              value: `${summaries.length}`,
               color: "",
             },
             {
@@ -233,7 +233,7 @@ export default async function JobsPage() {
                       </div>
                     </TableCell>
                     <TableCell
-                      className={`text-right tabular-nums ${job.overUnderBilling > 0 ? "text-neon-green" : "text-neon-red"}`}
+                      className={`text-right tabular-nums ${job.overUnderBilling >= 0 ? "text-neon-green" : "text-neon-red"}`}
                     >
                       {formatCurrency(
                         job.overUnderBilling

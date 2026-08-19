@@ -1,17 +1,20 @@
-export function Header() {
-  const now = new Date()
-  const timeStr = now.toLocaleTimeString("en-US", {
-    hour12: false,
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-  })
-  const dateStr = now.toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  })
+import { LiveClock } from "@/components/live-clock"
 
+function initials(name: string | null): string {
+  if (!name) return "––"
+  const parts = name.trim().split(/\s+/)
+  const first = parts[0]?.[0] ?? ""
+  const last = parts.length > 1 ? parts[parts.length - 1][0] : ""
+  return (first + last).toUpperCase() || "––"
+}
+
+export function Header({
+  userName,
+  userRole,
+}: {
+  userName: string | null
+  userRole: string | null
+}) {
   return (
     <header className="sticky top-0 z-30 flex h-12 items-center justify-between border-b border-grid-line bg-cyber-void/90 px-6 backdrop-blur-xl">
       {/* Left: Tagline */}
@@ -39,27 +42,23 @@ export function Header() {
       {/* Right: System readouts */}
       <div className="flex items-center gap-5">
         <div className="flex items-center gap-3">
-          <div className="text-right">
-            <p className="font-mono text-[10px] uppercase tracking-[0.15em] text-hud-muted">
-              {dateStr}
-            </p>
-            <p className="font-mono text-[10px] tabular-nums text-neon-cyan">
-              {timeStr}
-            </p>
-          </div>
+          <LiveClock />
           <div className="h-6 w-px bg-grid-line" />
           <div className="text-right">
             <p className="font-mono text-[10px] uppercase tracking-[0.15em] text-hud-muted">
               OPERATOR
             </p>
-            <p className="font-mono text-[10px] text-neon-green">
-              ADMIN
+            <p className="font-mono text-[10px] uppercase text-neon-green">
+              {userRole ?? "guest"}
             </p>
           </div>
         </div>
-        <div className="flex h-7 w-7 items-center justify-center rounded-sm border border-neon-cyan/30 bg-neon-cyan/10">
+        <div
+          className="flex h-7 w-7 items-center justify-center rounded-sm border border-neon-cyan/30 bg-neon-cyan/10"
+          title={userName ?? undefined}
+        >
           <span className="font-display text-[10px] font-bold text-neon-cyan">
-            DS
+            {initials(userName)}
           </span>
         </div>
       </div>

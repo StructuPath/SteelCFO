@@ -64,7 +64,7 @@ function toDateStr(d: Date): string {
 // ---------------------------------------------------------------------------
 
 export async function getJobs(
-  orgId = DEMO_ORG_ID
+  orgId: string
 ): Promise<Job[]> {
   const jobs = await prisma.job.findMany({
     where: { organizationId: orgId },
@@ -87,7 +87,7 @@ export async function getJobs(
 }
 
 export async function getCosts(
-  orgId = DEMO_ORG_ID
+  orgId: string
 ): Promise<CostRecord[]> {
   const costs = await prisma.costRecord.findMany({
     where: { organizationId: orgId },
@@ -106,7 +106,7 @@ export async function getCosts(
 }
 
 export async function getInvoices(
-  orgId = DEMO_ORG_ID
+  orgId: string
 ): Promise<Invoice[]> {
   const invoices = await prisma.invoice.findMany({
     where: { organizationId: orgId },
@@ -127,7 +127,7 @@ export async function getInvoices(
 }
 
 export async function getBills(
-  orgId = DEMO_ORG_ID
+  orgId: string
 ): Promise<Bill[]> {
   const bills = await prisma.bill.findMany({
     where: { organizationId: orgId },
@@ -146,7 +146,7 @@ export async function getBills(
 }
 
 export async function getChangeOrders(
-  orgId = DEMO_ORG_ID
+  orgId: string
 ): Promise<ChangeOrder[]> {
   const cos = await prisma.changeOrder.findMany({
     where: { organizationId: orgId },
@@ -167,7 +167,7 @@ export async function getChangeOrders(
 }
 
 export async function getPayroll(
-  orgId = DEMO_ORG_ID
+  orgId: string
 ): Promise<PayrollRecord[]> {
   const records = await prisma.payrollRecord.findMany({
     where: { organizationId: orgId },
@@ -188,7 +188,7 @@ export async function getPayroll(
 }
 
 export async function getBankAccounts(
-  orgId = DEMO_ORG_ID
+  orgId: string
 ): Promise<BankAccount[]> {
   const accounts = await prisma.bankAccount.findMany({
     where: { organizationId: orgId },
