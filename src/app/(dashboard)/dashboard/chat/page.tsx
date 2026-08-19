@@ -31,10 +31,16 @@ const ALLOWED_TAGS = new Set([
 ])
 
 function stripUnsafeTags(html: string): string {
-  // Remove any tag not in the allowlist
-  return html.replace(/<\/?([a-zA-Z][a-zA-Z0-9]*)\b[^>]*>/g, (match, tag) => {
-    return ALLOWED_TAGS.has(tag.toLowerCase()) ? match : ""
-  })
+  // Remove any tag not in the allowlist; rebuild allowed tags bare so no
+  // attributes can ever ride through, even if a future markdown feature
+  // starts emitting them
+  return html.replace(
+    /<(\/?)([a-zA-Z][a-zA-Z0-9]*)\b[^>]*?(\/?)>/g,
+    (_match, close, tag, selfClose) => {
+      if (!ALLOWED_TAGS.has(tag.toLowerCase())) return ""
+      return `<${close}${tag.toLowerCase()}${selfClose ? "/" : ""}>`
+    }
+  )
 }
 
 function formatMarkdown(text: string): string {
