@@ -76,7 +76,7 @@ All queries filter by `organizationId`, resolved from the authenticated user's s
 ## Tech Stack
 
 - **Framework:** Next.js 16 (App Router, RSC), React 19.2, TypeScript (strict)
-- **Database:** PostgreSQL + Prisma 6
+- **Database:** PostgreSQL + Prisma 7 (driver adapter: @prisma/adapter-pg; CLI config in prisma.config.ts)
 - **Auth:** NextAuth v5 beta + Prisma adapter + bcryptjs (JWT strategy)
 - **AI:** Anthropic Claude SDK (`@anthropic-ai/sdk`)
 - **Charts:** Recharts
