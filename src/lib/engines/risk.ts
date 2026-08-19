@@ -45,7 +45,8 @@ export function calculateRiskScores(
   jobs: Job[],
   costs: CostRecord[],
   invoices: Invoice[],
-  changeOrders: ChangeOrder[]
+  changeOrders: ChangeOrder[],
+  asOfDate?: string
 ): RiskScore[] {
   const activeJobs = jobs.filter(
     (j) => j.status === "active"
@@ -124,9 +125,13 @@ export function calculateRiskScores(
         (i) =>
           i.jobId === job.id && i.status !== "paid"
       )
-      const now = new Date()
+      // Compare date strings — Date parsing mixes UTC midnight with the
+      // local clock and flags next-day invoices as overdue in the evening
+      const todayStr = asOfDate
+        ? asOfDate
+        : new Date().toISOString().split("T")[0]
       const overdueInvoices = jobInvoices.filter(
-        (i) => new Date(i.dueDate) < now
+        (i) => i.dueDate < todayStr
       )
 
       let arRisk = 0
@@ -164,7 +169,10 @@ export function calculateRiskScores(
       )
 
       let coRisk = 0
-      if (pendingValue > revisedContract * 0.1) {
+      if (
+        revisedContract > 0 &&
+        pendingValue > revisedContract * 0.1
+      ) {
         coRisk = 8
         factors.push(
           `Pending COs = ${((pendingValue / revisedContract) * 100).toFixed(0)}% of contract`
@@ -257,7 +265,8 @@ export function generateCfoBrief(
     (a) =>
       a.accountType === "checking" ||
       a.accountType === "operating" ||
-      a.accountType === "payroll"
+      a.accountType === "payroll" ||
+      a.accountType === "savings"
   )
   const totalCash = cashAccounts.reduce(
     (s, a) => s + a.balance,

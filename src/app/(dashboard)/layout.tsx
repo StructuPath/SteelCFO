@@ -18,10 +18,16 @@ export default async function DashboardLayout({
 
   return (
     <div className="min-h-screen bg-cyber-black">
-      <DemoBanner />
       <Sidebar />
       <div className="ml-64">
-        <Header />
+        <DemoBanner />
+        <Header
+          userName={session?.user?.name ?? null}
+          userRole={
+            session?.user?.role ??
+            (process.env.DEMO_MODE === "true" ? "demo" : null)
+          }
+        />
         <main className="p-6">{children}</main>
       </div>
     </div>

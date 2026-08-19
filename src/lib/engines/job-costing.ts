@@ -358,6 +358,7 @@ export function calculateBacklog(
 ): {
   lines: BacklogLine[]
   totalBacklog: number
+  totalBurnRate: number
   avgBurnRate: number
   monthsOfWork: number
 } {
@@ -427,16 +428,20 @@ export function calculateBacklog(
     (s, l) => s + l.remainingValue,
     0
   )
-  const avgBurnRate = lines.reduce(
+  const totalBurnRate = lines.reduce(
     (s, l) => s + l.burnRate,
     0
   )
+  const avgBurnRate =
+    lines.length > 0 ? totalBurnRate / lines.length : 0
+  // Months of work uses the combined burn across all jobs
   const monthsOfWork =
-    avgBurnRate > 0 ? totalBacklog / avgBurnRate : 0
+    totalBurnRate > 0 ? totalBacklog / totalBurnRate : 0
 
   return {
     lines,
     totalBacklog: Math.round(totalBacklog * 100) / 100,
+    totalBurnRate: Math.round(totalBurnRate * 100) / 100,
     avgBurnRate: Math.round(avgBurnRate * 100) / 100,
     monthsOfWork: Math.round(monthsOfWork * 10) / 10,
   }

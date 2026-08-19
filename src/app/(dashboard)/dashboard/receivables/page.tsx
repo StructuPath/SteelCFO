@@ -74,12 +74,13 @@ export default async function ReceivablesPage() {
           icon="◈"
         />
         <MetricCard
-          title="Overdue (30+ days)"
+          title="Overdue"
           value={formatCurrency(overdue)}
+          subtitle="All past-due invoices"
           icon="⚡"
           trend={{
             value: `${overduePct}% of total`,
-            positive: false,
+            positive: overdue === 0,
           }}
         />
         <MetricCard

@@ -84,7 +84,7 @@ export default async function RiskPage() {
         <MetricCard
           title="Avg Risk Score"
           value={avgScore.toFixed(1)}
-          subtitle="Weighted portfolio score"
+          subtitle="Average across active jobs"
           icon="◇"
         />
       </div>

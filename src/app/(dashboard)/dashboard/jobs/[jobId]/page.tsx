@@ -102,8 +102,10 @@ export default async function JobDetailPage({
                 )}
               </p>
               {summary.approvedChanges !== 0 && (
-                <p className="font-mono text-[10px] text-neon-green">
-                  +
+                <p
+                  className={`font-mono text-[10px] ${summary.approvedChanges > 0 ? "text-neon-green" : "text-neon-red"}`}
+                >
+                  {summary.approvedChanges > 0 ? "+" : ""}
                   {formatCurrency(
                     summary.approvedChanges
                   )}{" "}

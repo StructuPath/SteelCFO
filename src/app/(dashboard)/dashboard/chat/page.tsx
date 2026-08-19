@@ -31,10 +31,16 @@ const ALLOWED_TAGS = new Set([
 ])
 
 function stripUnsafeTags(html: string): string {
-  // Remove any tag not in the allowlist
-  return html.replace(/<\/?([a-zA-Z][a-zA-Z0-9]*)\b[^>]*>/g, (match, tag) => {
-    return ALLOWED_TAGS.has(tag.toLowerCase()) ? match : ""
-  })
+  // Remove any tag not in the allowlist; rebuild allowed tags bare so no
+  // attributes can ever ride through, even if a future markdown feature
+  // starts emitting them
+  return html.replace(
+    /<(\/?)([a-zA-Z][a-zA-Z0-9]*)\b[^>]*?(\/?)>/g,
+    (_match, close, tag, selfClose) => {
+      if (!ALLOWED_TAGS.has(tag.toLowerCase())) return ""
+      return `<${close}${tag.toLowerCase()}${selfClose ? "/" : ""}>`
+    }
+  )
 }
 
 function formatMarkdown(text: string): string {
@@ -76,10 +82,36 @@ export default function ChatPage() {
   const inputRef = useRef<HTMLTextAreaElement>(null)
 
   useEffect(() => {
+    if (messages.length === 0) return
     messagesEndRef.current?.scrollIntoView({
       behavior: "smooth",
     })
   }, [messages])
+
+  // Load persisted history for signed-in users
+  useEffect(() => {
+    const controller = new AbortController()
+    fetch("/api/chat", { signal: controller.signal })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data?.messages?.length) {
+          setMessages(data.messages)
+        }
+      })
+      .catch(() => {
+        // History is best-effort; the chat works without it
+      })
+    return () => controller.abort()
+  }, [])
+
+  const clearHistory = useCallback(async () => {
+    setMessages([])
+    try {
+      await fetch("/api/chat", { method: "DELETE" })
+    } catch {
+      // Best-effort
+    }
+  }, [])
 
   const sendMessage = useCallback(
     async (content: string) => {
@@ -118,41 +150,52 @@ export default function ChatPage() {
 
         const decoder = new TextDecoder()
         let assistantContent = ""
+        // SSE lines can be split across network reads — buffer the
+        // remainder so partial `data:` lines aren't dropped
+        let buffer = ""
 
         setMessages((prev) => [
           ...prev,
           { role: "assistant", content: "" },
         ])
 
+        const processLine = (line: string) => {
+          if (!line.startsWith("data: ")) return
+          const data = line.slice(6)
+          if (data === "[DONE]") return
+          try {
+            const parsed = JSON.parse(data)
+            if (typeof parsed.text !== "string") return
+            assistantContent += parsed.text
+            setMessages((prev) => {
+              const updated = [...prev]
+              updated[updated.length - 1] = {
+                role: "assistant",
+                content: assistantContent,
+              }
+              return updated
+            })
+          } catch {
+            // Skip malformed SSE chunks
+          }
+        }
+
         while (true) {
           const { done, value } =
             await reader.read()
           if (done) break
 
-          const text = decoder.decode(value)
-          const lines = text
-            .split("\n")
-            .filter((l) => l.startsWith("data: "))
-
+          buffer += decoder.decode(value, {
+            stream: true,
+          })
+          const lines = buffer.split("\n")
+          buffer = lines.pop() ?? ""
           for (const line of lines) {
-            const data = line.slice(6)
-            if (data === "[DONE]") continue
-            try {
-              const parsed = JSON.parse(data)
-              assistantContent += parsed.text
-              setMessages((prev) => {
-                const updated = [...prev]
-                updated[updated.length - 1] = {
-                  role: "assistant",
-                  content: assistantContent,
-                }
-                return updated
-              })
-            } catch {
-              // Skip malformed SSE chunks
-            }
+            processLine(line)
           }
         }
+        buffer += decoder.decode()
+        if (buffer) processLine(buffer)
       } catch (error) {
         const errorMsg =
           error instanceof Error
@@ -162,7 +205,7 @@ export default function ChatPage() {
           ...prev,
           {
             role: "assistant",
-            content: `Error: ${errorMsg}. Make sure ANTHROPIC_API_KEY is set in your .env file.`,
+            content: `Error: ${errorMsg}`,
           },
         ])
       } finally {
@@ -203,6 +246,16 @@ export default function ChatPage() {
           <span className="font-mono text-[9px] uppercase tracking-[0.2em] text-neon-green/70">
             ONLINE
           </span>
+          {messages.length > 0 && (
+            <button
+              type="button"
+              onClick={clearHistory}
+              disabled={isLoading}
+              className="ml-auto rounded-sm border border-grid-line px-2 py-0.5 font-mono text-[9px] uppercase tracking-[0.2em] text-hud-dim transition-colors hover:border-neon-red/40 hover:text-neon-red disabled:opacity-40"
+            >
+              Clear Session
+            </button>
+          )}
         </div>
       </div>
 

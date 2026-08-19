@@ -11,6 +11,11 @@ declare module "next-auth" {
       organizationId: string
     }
   }
+
+  interface User {
+    role?: string
+    organizationId?: string
+  }
 }
 
 declare module "next-auth/jwt" {

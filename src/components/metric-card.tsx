@@ -43,11 +43,18 @@ export function MetricCard({
                   className={cn(
                     "font-mono text-[10px] font-semibold",
                     trend.positive
-                      ? "text-neon-green text-glow-green"
-                      : "text-neon-red text-glow-red"
+                      ? "text-neon-green"
+                      : "text-neon-red"
                   )}
                 >
-                  {trend.positive ? "▲" : "▼"}{" "}
+                  <span aria-hidden="true">
+                    {trend.positive ? "▲" : "▼"}
+                  </span>
+                  <span className="sr-only">
+                    {trend.positive
+                      ? "favorable:"
+                      : "unfavorable:"}
+                  </span>{" "}
                   {trend.value}
                 </span>
               </div>

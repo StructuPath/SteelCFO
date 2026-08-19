@@ -36,7 +36,13 @@ function ScoreBar({
         : "bg-neon-green shadow-[0_0_6px_rgba(0,255,65,0.5)]"
   return (
     <div className="flex items-center gap-2">
-      <div className="h-1 w-12 overflow-hidden rounded-full bg-cyber-surface">
+      <div
+        role="progressbar"
+        aria-valuenow={value}
+        aria-valuemin={0}
+        aria-valuemax={max}
+        className="h-1 w-12 overflow-hidden rounded-full bg-cyber-surface"
+      >
         <div
           className={`h-full rounded-full transition-all duration-500 ${color}`}
           style={{ width: `${pct}%` }}

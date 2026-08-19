@@ -2,7 +2,7 @@
   <img src="https://img.shields.io/badge/Next.js-16-black?logo=next.js" alt="Next.js 16" />
   <img src="https://img.shields.io/badge/React-19-blue?logo=react" alt="React 19" />
   <img src="https://img.shields.io/badge/TypeScript-5.7-blue?logo=typescript" alt="TypeScript" />
-  <img src="https://img.shields.io/badge/Prisma-6-2D3748?logo=prisma" alt="Prisma 6" />
+  <img src="https://img.shields.io/badge/Prisma-7-2D3748?logo=prisma" alt="Prisma 7" />
   <img src="https://img.shields.io/badge/Claude-AI-orange?logo=anthropic" alt="Claude AI" />
   <img src="https://img.shields.io/badge/License-MIT-green" alt="MIT License" />
 </p>
@@ -122,7 +122,7 @@ The chat endpoint (`src/app/api/chat/route.ts`) implements:
 |-------|-----------|
 | **Framework** | [Next.js 16](https://nextjs.org/) (App Router, React Server Components) |
 | **Language** | TypeScript 5.7 (strict mode) |
-| **Database** | PostgreSQL 14+ with [Prisma 6](https://www.prisma.io/) ORM |
+| **Database** | PostgreSQL 14+ with [Prisma 7](https://www.prisma.io/) ORM |
 | **AI** | [Anthropic Claude SDK](https://docs.anthropic.com/en/docs/build-with-claude/typescript-sdk) (streaming SSE) |
 | **Auth** | [NextAuth v5](https://authjs.dev/) (beta) + Prisma adapter + JWT strategy |
 | **Charts** | [Recharts](https://recharts.org/) |
@@ -172,6 +172,7 @@ Open [http://localhost:3000](http://localhost:3000). With `DEMO_MODE=true` (defa
 | `NEXTAUTH_SECRET` | ✅ | Auth signing key (generate: `openssl rand -base64 32`) |
 | `NEXTAUTH_URL` | ✅ | Auth redirect URL (`http://localhost:3000` for dev) |
 | `ANTHROPIC_API_KEY` | For AI chat | Claude API key from Anthropic |
+| `ANTHROPIC_MODEL` | Optional | Claude model for the AI chat (default: `claude-opus-5`) |
 | `DEMO_MODE` | Optional | `"true"` to bypass authentication (evaluation/demo) |
 | `SEED_ADMIN_PASSWORD` | Optional | Password for seeded admin user (default: `change-me-in-production`) |
 
@@ -301,23 +302,14 @@ steelcfo/
 │   │   ├── db.ts                              # Prisma client singleton
 │   │   └── utils.ts                           # Utility functions
 │   ├── auth.ts                                # NextAuth configuration
-│   ├── auth.config.ts                         # Auth config (edge-compatible)
-│   ├── middleware.ts                          # Route protection
+│   ├── proxy.ts                               # Route protection
 │   └── types/
 │       └── next-auth.d.ts                     # NextAuth type augmentation
 ├── prisma/
 │   ├── schema.prisma                          # Database schema (15 models)
 │   └── seed.ts                                # CSV-to-database seeder
 ├── data/sample/                               # Demo CSV data files (7 files)
-├── extensions/                                # Pi agent tool extensions
-│   ├── steelcfo-data.ts                       # Data import/query tools
-│   ├── steelcfo-calc.ts                       # Job costing tools
-│   └── steelcfo-forecast.ts                   # Forecasting/risk tools
-├── .pi/
-│   ├── agents/                                # Agent definitions (4 agents)
-│   ├── prompts/                               # Prompt templates (4 prompts)
-│   ├── skills/                                # Multi-step workflows (4 skills)
-│   └── themes/                                # TUI theme
+├── .github/workflows/ci.yml                   # CI: lint, typecheck, test, build
 ├── AGENT.md                                   # Full AI agent documentation
 ├── CLAUDE.md                                  # Claude Code development guide
 └── package.json
