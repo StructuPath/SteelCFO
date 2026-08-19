@@ -114,6 +114,51 @@ describe("calculateRiskScores", () => {
     expect(r.coRisk).toBe(8)
   })
 
+  it("never emits Infinity for a zero-value contract with pending COs", () => {
+    const pendingCO: ChangeOrder = {
+      id: "CO-Z",
+      jobId: "J100",
+      description: "Pending on zero contract",
+      amount: 25_000,
+      status: "pending",
+      submittedDate: "2026-07-01",
+      approvedDate: null,
+      probability: 50,
+    }
+    const [r] = calculateRiskScores(
+      [job({ contractValue: 0, estimatedCost: 0 })],
+      [],
+      [],
+      [pendingCO],
+      AS_OF
+    )
+    expect(r.factors.join(" ")).not.toContain("Infinity")
+    expect(Number.isFinite(r.overallScore)).toBe(true)
+  })
+
+  it("does not flag an invoice due today as overdue", () => {
+    const dueToday: Invoice = {
+      id: "INV-T",
+      jobId: "J100",
+      customer: "Acme GC",
+      amount: 500_000,
+      amountPaid: 0,
+      invoiceDate: "2026-07-20",
+      dueDate: AS_OF,
+      paidDate: null,
+      status: "open",
+      retainage: 0,
+    }
+    const [r] = calculateRiskScores(
+      [job({})],
+      [cost({})],
+      [dueToday],
+      [],
+      AS_OF
+    )
+    expect(r.arRisk).toBe(0)
+  })
+
   it("flags budget overrun from actual + committed", () => {
     const [r] = calculateRiskScores(
       [job({})],

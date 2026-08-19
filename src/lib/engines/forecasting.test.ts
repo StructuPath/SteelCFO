@@ -86,6 +86,41 @@ describe("calculateCashForecast", () => {
     expect(summary.beginningCash).toBe(500_000)
   })
 
+  it("counts savings accounts as cash", () => {
+    const withSavings: BankAccount[] = [
+      ...bankAccounts,
+      {
+        name: "Reserve",
+        accountType: "savings",
+        balance: 120_000,
+        availableCredit: 0,
+        asOfDate: AS_OF,
+      },
+    ]
+    const { summary } = calculateCashForecast(
+      withSavings,
+      [],
+      [],
+      [],
+      13,
+      AS_OF
+    )
+    expect(summary.beginningCash).toBe(620_000)
+  })
+
+  it("reports week 1 as the minimum week on a healthy flat forecast", () => {
+    const { summary } = calculateCashForecast(
+      bankAccounts,
+      [],
+      [],
+      [],
+      13,
+      AS_OF
+    )
+    expect(summary.minBalanceWeek).toBe(1)
+    expect(summary.minBalance).toBe(500_000)
+  })
+
   it("collects overdue AR in week 1 instead of dropping it", () => {
     const overdue = invoice({ dueDate: "2026-06-01" })
     const { weeks } = calculateCashForecast(
@@ -212,6 +247,15 @@ describe("calculateArAging", () => {
 })
 
 describe("calculateApSchedule", () => {
+  it("does not flag a bill due today as overdue", () => {
+    const { totals } = calculateApSchedule(
+      [bill({ dueDate: AS_OF, amount: 5_000 })],
+      AS_OF
+    )
+    expect(totals.overdue).toBe(0)
+    expect(totals.dueNext7).toBe(5_000)
+  })
+
   it("computes overdue and upcoming totals", () => {
     const bills = [
       bill({ id: "A", dueDate: "2026-08-01", amount: 10_000 }), // overdue

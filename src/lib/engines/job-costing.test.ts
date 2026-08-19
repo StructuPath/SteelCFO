@@ -3,6 +3,7 @@ import {
   calculateJobCostSummary,
   calculateJobCostDetail,
   calculateWipSchedule,
+  calculateBacklog,
 } from "./job-costing"
 import type {
   Job,
@@ -203,5 +204,27 @@ describe("calculateWipSchedule", () => {
     expect(totals.underbilled).toBe(50_000)
     expect(totals.overbilled).toBe(0)
     expect(totals.net).toBe(-50_000)
+  })
+})
+
+describe("calculateBacklog", () => {
+  it("averages burn rate across jobs and sizes months of work on the total", () => {
+    const jobB: Job = { ...job, id: "J200", name: "Second Job" }
+    const costsB: CostRecord[] = [
+      ...costs,
+      { ...costs[0], jobId: "J200" },
+      { ...costs[1], jobId: "J200" },
+    ]
+    const result = calculateBacklog([job, jobB], costsB, changeOrders)
+    expect(result.lines).toHaveLength(2)
+    expect(result.totalBurnRate).toBeGreaterThan(0)
+    expect(result.avgBurnRate).toBeCloseTo(
+      result.totalBurnRate / 2,
+      0
+    )
+    expect(result.monthsOfWork).toBeCloseTo(
+      Math.round((result.totalBacklog / result.totalBurnRate) * 10) / 10,
+      1
+    )
   })
 })
