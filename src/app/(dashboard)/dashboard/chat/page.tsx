@@ -118,41 +118,52 @@ export default function ChatPage() {
 
         const decoder = new TextDecoder()
         let assistantContent = ""
+        // SSE lines can be split across network reads — buffer the
+        // remainder so partial `data:` lines aren't dropped
+        let buffer = ""
 
         setMessages((prev) => [
           ...prev,
           { role: "assistant", content: "" },
         ])
 
+        const processLine = (line: string) => {
+          if (!line.startsWith("data: ")) return
+          const data = line.slice(6)
+          if (data === "[DONE]") return
+          try {
+            const parsed = JSON.parse(data)
+            if (typeof parsed.text !== "string") return
+            assistantContent += parsed.text
+            setMessages((prev) => {
+              const updated = [...prev]
+              updated[updated.length - 1] = {
+                role: "assistant",
+                content: assistantContent,
+              }
+              return updated
+            })
+          } catch {
+            // Skip malformed SSE chunks
+          }
+        }
+
         while (true) {
           const { done, value } =
             await reader.read()
           if (done) break
 
-          const text = decoder.decode(value)
-          const lines = text
-            .split("\n")
-            .filter((l) => l.startsWith("data: "))
-
+          buffer += decoder.decode(value, {
+            stream: true,
+          })
+          const lines = buffer.split("\n")
+          buffer = lines.pop() ?? ""
           for (const line of lines) {
-            const data = line.slice(6)
-            if (data === "[DONE]") continue
-            try {
-              const parsed = JSON.parse(data)
-              assistantContent += parsed.text
-              setMessages((prev) => {
-                const updated = [...prev]
-                updated[updated.length - 1] = {
-                  role: "assistant",
-                  content: assistantContent,
-                }
-                return updated
-              })
-            } catch {
-              // Skip malformed SSE chunks
-            }
+            processLine(line)
           }
         }
+        buffer += decoder.decode()
+        if (buffer) processLine(buffer)
       } catch (error) {
         const errorMsg =
           error instanceof Error
@@ -162,7 +173,7 @@ export default function ChatPage() {
           ...prev,
           {
             role: "assistant",
-            content: `Error: ${errorMsg}. Make sure ANTHROPIC_API_KEY is set in your .env file.`,
+            content: `Error: ${errorMsg}`,
           },
         ])
       } finally {

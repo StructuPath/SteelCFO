@@ -1,6 +1,16 @@
 import { auth } from "@/auth"
 import { NextResponse } from "next/server"
 
+if (
+  process.env.DEMO_MODE === "true" &&
+  process.env.NODE_ENV === "production"
+) {
+  console.warn(
+    "⚠ DEMO_MODE=true in a production build — authentication is BYPASSED " +
+      "for every route. Unset DEMO_MODE before exposing this deployment."
+  )
+}
+
 export default auth((req) => {
   const { pathname } = req.nextUrl
   const isLoggedIn = !!req.auth
