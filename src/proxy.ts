@@ -8,6 +8,7 @@ export default auth((req) => {
   // Public routes — always accessible
   const isPublicRoute =
     pathname === "/login" ||
+    pathname === "/api/health" ||
     pathname.startsWith("/api/auth")
 
   if (isPublicRoute) {

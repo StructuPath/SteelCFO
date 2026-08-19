@@ -53,15 +53,18 @@ function daysBetween(a: string | Date, b: string | Date): number {
  * 13-week rolling cash projection based on AR collections, AP payments,
  * and payroll obligations.
  *
- * Inflow schedule: open invoices matched to their due dates.
- * Outflow schedule: open bills matched to due dates + avg weekly payroll.
+ * Inflow schedule: open invoices matched to their due dates; anything
+ * already overdue is assumed to collect in week 1.
+ * Outflow schedule: open bills matched to due dates (overdue in week 1)
+ * + avg weekly payroll.
  */
 export function calculateCashForecast(
   bankAccounts: BankAccount[],
   invoices: Invoice[],
   bills: Bill[],
   payroll: PayrollRecord[],
-  weeks: number = 13
+  weeks: number = 13,
+  asOfDate?: string
 ): {
   weeks: CashForecastWeek[]
   summary: {
@@ -85,7 +88,7 @@ export function calculateCashForecast(
   const beginningCash = currentBalance
 
   // Determine the Monday of the current week
-  const now = new Date()
+  const now = asOfDate ? new Date(asOfDate) : new Date()
   const weekStart = new Date(now)
   const dayOfWeek = weekStart.getDay()
   const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek
@@ -123,22 +126,25 @@ export function calculateCashForecast(
     const wStartStr = toDateStr(wStart)
     const wEndStr = toDateStr(wEnd)
 
-    // AR collections: invoices whose due date falls in this week
+    // AR collections: invoices due this week; week 1 also picks up
+    // everything already overdue so past-due AR isn't dropped
     const arCollections = openInvoices
       .filter(
         (i) =>
-          i.dueDate >= wStartStr && i.dueDate <= wEndStr
+          i.dueDate <= wEndStr &&
+          (w === 0 || i.dueDate >= wStartStr)
       )
       .reduce(
         (s, i) => s + (i.amount - i.amountPaid),
         0
       )
 
-    // AP payments: bills whose due date falls in this week
+    // AP payments: bills due this week; overdue bills land in week 1
     const apPayments = openBills
       .filter(
         (b) =>
-          b.dueDate >= wStartStr && b.dueDate <= wEndStr
+          b.dueDate <= wEndStr &&
+          (w === 0 || b.dueDate >= wStartStr)
       )
       .reduce((s, b) => s + b.amount, 0)
 

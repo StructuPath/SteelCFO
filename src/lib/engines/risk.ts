@@ -45,7 +45,8 @@ export function calculateRiskScores(
   jobs: Job[],
   costs: CostRecord[],
   invoices: Invoice[],
-  changeOrders: ChangeOrder[]
+  changeOrders: ChangeOrder[],
+  asOfDate?: string
 ): RiskScore[] {
   const activeJobs = jobs.filter(
     (j) => j.status === "active"
@@ -124,7 +125,7 @@ export function calculateRiskScores(
         (i) =>
           i.jobId === job.id && i.status !== "paid"
       )
-      const now = new Date()
+      const now = asOfDate ? new Date(asOfDate) : new Date()
       const overdueInvoices = jobInvoices.filter(
         (i) => new Date(i.dueDate) < now
       )
