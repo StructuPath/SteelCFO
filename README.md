@@ -302,22 +302,14 @@ steelcfo/
 │   │   └── utils.ts                           # Utility functions
 │   ├── auth.ts                                # NextAuth configuration
 │   ├── auth.config.ts                         # Auth config (edge-compatible)
-│   ├── middleware.ts                          # Route protection
+│   ├── proxy.ts                               # Route protection
 │   └── types/
 │       └── next-auth.d.ts                     # NextAuth type augmentation
 ├── prisma/
 │   ├── schema.prisma                          # Database schema (15 models)
 │   └── seed.ts                                # CSV-to-database seeder
 ├── data/sample/                               # Demo CSV data files (7 files)
-├── extensions/                                # Pi agent tool extensions
-│   ├── steelcfo-data.ts                       # Data import/query tools
-│   ├── steelcfo-calc.ts                       # Job costing tools
-│   └── steelcfo-forecast.ts                   # Forecasting/risk tools
-├── .pi/
-│   ├── agents/                                # Agent definitions (4 agents)
-│   ├── prompts/                               # Prompt templates (4 prompts)
-│   ├── skills/                                # Multi-step workflows (4 skills)
-│   └── themes/                                # TUI theme
+├── .github/workflows/ci.yml                   # CI: lint, typecheck, test, build
 ├── AGENT.md                                   # Full AI agent documentation
 ├── CLAUDE.md                                  # Claude Code development guide
 └── package.json

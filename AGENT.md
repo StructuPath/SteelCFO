@@ -36,6 +36,11 @@ The production web app uses the **Anthropic Claude SDK** to power a streaming AI
 ### Runtime 2 — Pi Agent System (Local)
 A multi-agent team powered by [Pi](https://github.com/mariozechner/pi-coding-agent) runs locally with tool-calling capabilities. Four specialized agents collaborate through a routing system, each with domain-specific tools provided by TypeScript extensions.
 
+> **Note:** The Pi runtime files referenced below (`.pi/`, `extensions/`) are
+> not checked into this repository — they live in the local Pi workspace.
+> Only Runtime 1 (the Next.js web app) is contained in this repo; its engine
+> layer is the ported, canonical implementation of the same financial logic.
+
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │                        SteelCFO AI Layer                        │

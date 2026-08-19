@@ -23,7 +23,12 @@ npm run db:studio        # Launch Prisma Studio GUI
 npm run db:reset         # Wipe + migrate + seed (destructive, dev only)
 ```
 
-No test framework is configured.
+```bash
+# Quality gates (run all three before pushing; CI enforces them)
+npm run lint             # ESLint
+npm run typecheck        # tsc --noEmit
+npm test                 # Vitest unit tests (engines)
+```
 
 ## Architecture
 
@@ -49,7 +54,7 @@ RSC Page → getAllData() (lib/data.ts) → Pure Engine Functions (lib/engines/)
 
 POST endpoint with Zod input validation, rate limiting (20 req/min per IP), and session-based auth. Fetches all financial data, runs every engine, embeds results into a system prompt, then streams Claude's response via SSE with abort signal support for client disconnects.
 
-### Authentication (`src/auth.ts`, `src/middleware.ts`)
+### Authentication (`src/auth.ts`, `src/proxy.ts`)
 
 NextAuth v5 with credentials provider, JWT strategy, Prisma adapter. Middleware protects all dashboard and API routes. Session includes `userId`, `organizationId`, and `role`.
 
