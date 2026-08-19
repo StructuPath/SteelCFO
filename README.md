@@ -301,7 +301,6 @@ steelcfo/
 │   │   ├── db.ts                              # Prisma client singleton
 │   │   └── utils.ts                           # Utility functions
 │   ├── auth.ts                                # NextAuth configuration
-│   ├── auth.config.ts                         # Auth config (edge-compatible)
 │   ├── proxy.ts                               # Route protection
 │   └── types/
 │       └── next-auth.d.ts                     # NextAuth type augmentation
